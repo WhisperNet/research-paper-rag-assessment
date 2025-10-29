@@ -7,13 +7,16 @@
     "bun": ">=1.1.0"
   },
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "bun run src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "NODE_ENV=production bun run src/index.ts",
+    "start": "NODE_ENV=production bun run src/server.ts",
     "lint": "eslint . --ext .ts",
     "test": "vitest run"
   },
   "dependencies": {
+    "@qdrant/js-client-rest": "^1.9.0",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -21,8 +24,7 @@
     "ioredis": "^5.4.1",
     "mongodb": "^6.9.0",
     "pino": "^9.4.0",
-    "zod": "^3.23.8",
-    "@qdrant/js-client-rest": "^1.9.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
