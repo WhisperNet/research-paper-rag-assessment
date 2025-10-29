@@ -6,7 +6,10 @@ let client: any = null;
 export function getQdrant(): any {
   if (client) return client;
   const env = loadEnv();
-  client = new QdrantClient({ url: env.QDRANT_URL });
+  client = new QdrantClient({
+    url: env.QDRANT_URL,
+    checkCompatibility: false as any,
+  });
   return client;
 }
 

@@ -9,6 +9,7 @@ import { errorHandler } from './middlewares/errorHandler';
 import { loadEnv } from './config/env';
 import { openapiSpec } from './openapi/spec';
 import healthRouter from './routes/health';
+import { startIngestWorker } from './services/ingestionQueue';
 
 config();
 
@@ -45,3 +46,8 @@ app.use((req: any, res: any) => {
 app.use(errorHandler());
 
 export default app;
+
+// start background worker (no-op if already started)
+try {
+  startIngestWorker();
+} catch {}

@@ -4,6 +4,7 @@ import { notImplemented, ok } from '../utils/http';
 import { loadEnv } from '../config/env';
 import { getDb } from '../services/mongoClient';
 import { logger } from '../config/logger';
+import { enqueueIngest } from '../services/ingestionQueue';
 
 const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } });
 
@@ -55,6 +56,21 @@ router.post('/upload', upload.single('file'), async (req: any, res: any) => {
       status: 'extracted',
       created_at: new Date(),
     });
+
+    // persist chunks for ingestion
+    if (Array.isArray(extract.chunks) && extract.chunks.length) {
+      const docs = extract.chunks.map((c: any) => ({
+        paper_id: String(result.insertedId),
+        text: c.text,
+        section: c.section,
+        page: c.page,
+        order: c.order,
+      }));
+      await db.collection('chunks').insertMany(docs);
+    }
+
+    // enqueue ingestion to index into Qdrant
+    await enqueueIngest(String(result.insertedId));
 
     ok(res, { paper_id: String(result.insertedId) });
   } catch (e: any) {

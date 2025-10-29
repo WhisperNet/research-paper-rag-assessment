@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import io
 import re
 import fitz  # PyMuPDF
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 app = FastAPI(title="Embedder Service")
@@ -150,6 +150,45 @@ async def extract(file: UploadFile = File(...)):
 
     response = ExtractResponse(metadata=metadata, sections=sections, chunks=chunks)
     return JSONResponse(content=response.model_dump())
+
+
+# ----------------- Embedding endpoint -----------------
+from pydantic import Field
+from functools import lru_cache
+
+
+class EmbedRequest(BaseModel):
+    texts: List[str]
+    model: Optional[str] = Field(default="BAAI/bge-small-en-v1.5")
+    normalize: Optional[bool] = Field(default=True)
+
+
+class EmbedResponse(BaseModel):
+    model: str
+    vectors: List[List[float]]
+    dim: int
+
+
+@lru_cache(maxsize=1)
+def get_model(name: str):
+    from fastembed import TextEmbedding  # lazy import
+
+    return TextEmbedding(model_name=name)
+
+
+@app.post("/embed")
+async def embed(req: EmbedRequest):
+    if not req.texts:
+        raise HTTPException(status_code=400, detail="texts is required and cannot be empty")
+    try:
+        model = get_model(req.model or "BAAI/bge-small-en-v1.5")
+        # fastembed returns an iterator of embeddings; collect into list
+        vectors_iter = model.embed(req.texts, normalize=bool(req.normalize))
+        vectors = [list(v) for v in vectors_iter]
+        dim = len(vectors[0])
+        return EmbedResponse(model=str(req.model), vectors=vectors, dim=dim)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Embedding failed: {e}")
 
 
 if __name__ == "__main__":
