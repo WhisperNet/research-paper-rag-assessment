@@ -17,7 +17,7 @@ export function assemblePrompt(
     '<context>',
     ...context.map((c, idx) =>
       [
-        `<chunk index="${idx}">`,
+        `<chunk>`,
         `<meta paper_id="${c.source.paper_id}" paper_title="${escapeXml(
           c.source.paper_title || ''
         )}" section="${escapeXml(c.source.section || '')}" page="${

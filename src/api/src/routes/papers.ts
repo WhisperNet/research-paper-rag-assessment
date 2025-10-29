@@ -5,15 +5,158 @@ import { loadEnv } from '../config/env';
 import { getDb } from '../services/mongoClient';
 import { logger } from '../config/logger';
 import { enqueueIngest } from '../services/ingestionQueue';
+import {
+  deleteByPaperId,
+  countVectorsByPaperId,
+} from '../services/qdrantClient';
 
 const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } });
 
 const router = Router();
 
-router.get('/', (req: any, res: any) => notImplemented(res));
-router.get('/:id', (req: any, res: any) => notImplemented(res));
-router.delete('/:id', (req: any, res: any) => notImplemented(res));
-router.get('/:id/stats', (req: any, res: any) => notImplemented(res));
+router.get('/', async (_req: any, res: any) => {
+  try {
+    const db = await getDb();
+    const papers = await db
+      .collection('papers')
+      .find({}, { projection: {} })
+      .sort({ created_at: -1 })
+      .toArray();
+    const items = papers.map((p: any) => ({
+      id: String(p._id),
+      filename: p.filename,
+      title: p?.metadata?.title,
+      status: p.status,
+      chunk_count: p.chunk_count,
+      created_at: p.created_at,
+      indexed_at: p.indexed_at,
+    }));
+    ok(res, { items });
+  } catch (e: any) {
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL', message: e?.message || 'list failed' },
+    });
+  }
+});
+
+router.get('/:id', async (req: any, res: any) => {
+  try {
+    const id = req.params.id;
+    let objectId: any;
+    try {
+      objectId = new (await import('mongodb')).ObjectId(id);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'invalid id' },
+      });
+    }
+    const db = await getDb();
+    const paper = await db.collection('papers').findOne({ _id: objectId });
+    if (!paper)
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'paper not found' },
+      });
+    const chunkCount = await db
+      .collection('chunks')
+      .countDocuments({ paper_id: id });
+    ok(res, {
+      id: String(paper._id),
+      filename: paper.filename,
+      metadata: paper.metadata,
+      sections: paper.sections,
+      chunk_count: chunkCount,
+      status: paper.status,
+      created_at: paper.created_at,
+      indexed_at: paper.indexed_at,
+    });
+  } catch (e: any) {
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL', message: e?.message || 'details failed' },
+    });
+  }
+});
+
+router.delete('/:id', async (req: any, res: any) => {
+  try {
+    const id = req.params.id;
+    let objectId: any;
+    try {
+      objectId = new (await import('mongodb')).ObjectId(id);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'invalid id' },
+      });
+    }
+    const db = await getDb();
+    const paper = await db.collection('papers').findOne({ _id: objectId });
+    if (!paper)
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'paper not found' },
+      });
+
+    const removedVectors = await deleteByPaperId(id);
+    const delChunks = await db
+      .collection('chunks')
+      .deleteMany({ paper_id: id });
+    await db.collection('papers').deleteOne({ _id: objectId });
+
+    ok(res, {
+      removed_vectors: removedVectors,
+      removed_chunks: delChunks.deletedCount || 0,
+      removed_paper: true,
+    });
+  } catch (e: any) {
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL', message: e?.message || 'delete failed' },
+    });
+  }
+});
+
+router.get('/:id/stats', async (req: any, res: any) => {
+  try {
+    const id = req.params.id;
+    let objectId: any;
+    try {
+      objectId = new (await import('mongodb')).ObjectId(id);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'invalid id' },
+      });
+    }
+    const db = await getDb();
+    const paper = await db.collection('papers').findOne({ _id: objectId });
+    if (!paper)
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'paper not found' },
+      });
+
+    const vectorCount = await countVectorsByPaperId(id);
+    const chunkCount = await db
+      .collection('chunks')
+      .countDocuments({ paper_id: id });
+    ok(res, {
+      paper_id: id,
+      filename: paper.filename,
+      vector_count: vectorCount,
+      chunk_count: chunkCount,
+      indexed_at: paper.indexed_at || null,
+    });
+  } catch (e: any) {
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL', message: e?.message || 'stats failed' },
+    });
+  }
+});
 
 router.post('/upload', upload.single('file'), async (req: any, res: any) => {
   try {

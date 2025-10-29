@@ -84,5 +84,21 @@ export async function buildContext(
     }
   }
 
+  // De-duplicate citations (by paper_title + section + page), keep highest score, cap to 5
+  const seen = new Map<string, number>();
+  const unique: ContextBuilt['citations'] = [];
+  for (const c of out.citations) {
+    const key = `${c.paper_title || ''}|${c.section || ''}|${c.page || ''}`;
+    const existingIdx = seen.get(key);
+    if (existingIdx === undefined) {
+      seen.set(key, unique.length);
+      unique.push(c);
+    } else if (c.relevance_score > unique[existingIdx].relevance_score) {
+      unique[existingIdx] = c;
+    }
+  }
+  unique.sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+  out.citations = unique.slice(0, 5);
+
   return out;
 }

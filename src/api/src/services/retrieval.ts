@@ -66,11 +66,13 @@ export function rerankBySectionWeight(
     results: 1.1,
     discussion: 1.05,
     conclusion: 1.0,
+    unknown: 0.9,
   };
 
   const scored = items.map((it) => {
     const section = (it.payload.section || '').toLowerCase();
-    const weight = sectionWeights[section] || 1.0;
+    const mappedSection = section || 'unknown';
+    const weight = sectionWeights[mappedSection] || 1.0;
     const finalScore = it.score * weight;
     return { ...it, score: finalScore };
   });

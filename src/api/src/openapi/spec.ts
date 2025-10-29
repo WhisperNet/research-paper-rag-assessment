@@ -39,7 +39,40 @@ export const openapiSpec = {
       },
     },
     '/api/v1/papers': {
-      get: { responses: { '501': { description: 'stub' } } },
+      get: {
+        responses: {
+          '200': { description: 'ok' },
+          '500': { description: 'internal' },
+        },
+      },
+    },
+    '/api/v1/papers/{id}': {
+      get: {
+        responses: {
+          '200': { description: 'ok' },
+          '400': { description: 'bad request' },
+          '404': { description: 'not found' },
+          '500': { description: 'internal' },
+        },
+      },
+      delete: {
+        responses: {
+          '200': { description: 'ok' },
+          '400': { description: 'bad request' },
+          '404': { description: 'not found' },
+          '500': { description: 'internal' },
+        },
+      },
+    },
+    '/api/v1/papers/{id}/stats': {
+      get: {
+        responses: {
+          '200': { description: 'ok' },
+          '400': { description: 'bad request' },
+          '404': { description: 'not found' },
+          '500': { description: 'internal' },
+        },
+      },
     },
     '/api/v1/analytics/popular': {
       get: { responses: { '501': { description: 'stub' } } },
