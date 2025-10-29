@@ -7,6 +7,17 @@ config();
 const env = loadEnv();
 
 const port = Number(env.API_PORT);
-app.listen(port, () => {
+const server = app.listen(port, () => {
   logger.info({ port }, 'API listening');
+});
+
+server.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    logger.error({ port, err }, 'Port already in use');
+  } else if (err.code === 'EACCES') {
+    logger.error({ port, err }, 'Permission denied for port');
+  } else {
+    logger.error({ port, err }, 'Failed to start server');
+  }
+  process.exit(1);
 });
