@@ -8,7 +8,8 @@ export async function callExtract(
 ): Promise<any> {
   const base = process.env.EMBEDDER_URL || 'http://localhost:9100';
   const form = new FormData();
-  form.append('file', new Blob([file], { type: mimetype }), filename);
+  const bytes = new Uint8Array(file);
+  form.append('file', new Blob([bytes], { type: mimetype }), filename);
   const resp = await fetch(`${base}/extract`, {
     method: 'POST',
     body: form as any,

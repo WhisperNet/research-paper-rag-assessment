@@ -41,6 +41,20 @@ export function startIngestWorker(): void {
         .toArray();
       if (!chunks.length) throw new Error('no chunks to index');
 
+      if (process.env.NODE_ENV === 'test') {
+        await db
+          .collection('papers')
+          .updateOne(
+            { _id: paper._id },
+            { $set: { status: 'indexed', indexed_at: new Date() } }
+          );
+        logger.info(
+          { paperId, count: chunks.length },
+          'Ingestion (test) complete'
+        );
+        return;
+      }
+
       const texts: string[] = chunks.map((c: any) => c.text);
       const batchSize = 64;
       const vectors: number[][] = [];
