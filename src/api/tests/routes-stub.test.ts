@@ -15,8 +15,8 @@ describe('Stub routes return 501', () => {
     expect([200, 500]).toContain(res.status);
   });
 
-  it('GET /api/v1/analytics/popular returns 501', async () => {
+  it('GET /api/v1/analytics/popular implemented', async () => {
     const res = await (request(app) as any).get('/api/v1/analytics/popular');
-    expect(res.status).toBe(501);
+    expect([200, 500]).toContain(res.status);
   });
 });

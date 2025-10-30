@@ -75,7 +75,70 @@ export const openapiSpec = {
       },
     },
     '/api/v1/analytics/popular': {
-      get: { responses: { '501': { description: 'stub' } } },
+      get: {
+        parameters: [
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 100 },
+          },
+        ],
+        responses: {
+          '200': { description: 'ok' },
+          '500': { description: 'internal' },
+        },
+      },
+    },
+    '/api/v1/queries/history': {
+      get: {
+        parameters: [
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 100 },
+          },
+          {
+            name: 'offset',
+            in: 'query',
+            schema: { type: 'integer', minimum: 0 },
+          },
+        ],
+        responses: {
+          '200': { description: 'ok' },
+          '500': { description: 'internal' },
+        },
+      },
+    },
+    '/api/v1/queries/{id}/rating': {
+      patch: {
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  rating: { type: 'integer', minimum: 1, maximum: 5 },
+                },
+                required: ['rating'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'ok' },
+          '400': { description: 'bad request' },
+          '404': { description: 'not found' },
+          '500': { description: 'internal' },
+        },
+      },
     },
   },
 };

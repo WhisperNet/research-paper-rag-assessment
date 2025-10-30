@@ -10,6 +10,7 @@ import { loadEnv } from './config/env';
 import { openapiSpec } from './openapi/spec';
 import healthRouter from './routes/health';
 import { startIngestWorker } from './services/ingestionQueue';
+import { ensureQueryIndexes } from './services/analytics';
 
 config();
 
@@ -51,3 +52,10 @@ export default app;
 try {
   startIngestWorker();
 } catch {}
+
+// ensure indexes asynchronously (no-op if exist)
+(async () => {
+  try {
+    await ensureQueryIndexes();
+  } catch {}
+})();

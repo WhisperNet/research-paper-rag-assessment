@@ -49,3 +49,26 @@ Default local endpoints are baked in. Override via env vars:
 - `API_PORT`, `LOG_LEVEL`
 - `MONGO_URI`, `MONGO_DB`
 - `QDRANT_URL`, `REDIS_URL`, `OLLAMA_BASE_URL`
+
+### Key API endpoints
+
+Query
+
+- POST `/api/v1/query` — { question, top_k?, paper_ids? } => { answer, citations[], sources_used[], confidence }
+
+Papers
+
+- GET `/api/v1/papers`
+- GET `/api/v1/papers/{id}`
+- GET `/api/v1/papers/{id}/stats`
+- DELETE `/api/v1/papers/{id}`
+
+Analytics & History (Phase 6)
+
+- GET `/api/v1/queries/history?limit=&offset=` — recent queries, newest first
+- PATCH `/api/v1/queries/{id}/rating` — body: { rating: 1..5 }
+- GET `/api/v1/analytics/popular?limit=` — { top_questions[], top_papers[] }
+
+OpenAPI
+
+- GET `/openapi.json`
