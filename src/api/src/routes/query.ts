@@ -97,6 +97,7 @@ router.post('/', async (req: any, res: any) => {
         question,
         normalized_question: normalizeQuestion(question),
         paper_ids: paperIds,
+        answer,
         retrieval_time_ms: retrievalTimeMs,
         gen_time_ms: genTimeMs,
         total_time_ms: retrievalTimeMs + genTimeMs,

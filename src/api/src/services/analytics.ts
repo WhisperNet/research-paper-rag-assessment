@@ -11,6 +11,7 @@ export type QueryHistoryDoc = {
   question: string;
   normalized_question: string;
   paper_ids?: string[];
+  answer: string;
   retrieval_time_ms: number;
   gen_time_ms: number;
   total_time_ms: number;

@@ -23,6 +23,7 @@ router.get('/history', async (req: any, res: any) => {
             total_time_ms: 1,
             confidence: 1,
             created_at: 1,
+            answer: 1,
           },
         }
       )
