@@ -11,6 +11,21 @@ import gc
 
 app = FastAPI(title="Embedder Service")
 
+# --- CORS ---
+try:
+    from fastapi.middleware.cors import CORSMiddleware
+
+    allowed_origins = os.getenv("EMBEDDER_CORS_ORIGINS", "*").split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in allowed_origins if o.strip()],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+except Exception:
+    pass
+
 
 @app.get("/healthz")
 def healthz():

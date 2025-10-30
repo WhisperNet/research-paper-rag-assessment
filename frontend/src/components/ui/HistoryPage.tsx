@@ -52,6 +52,11 @@ const HistoryPage = () => {
                 {item.question}
               </div>
               <div className="flex gap-4 text-xs items-center min-w-max">
+                {typeof item.rating === 'number' && (
+                  <span className="inline-flex rounded bg-indigo-100 text-indigo-700 px-2 py-0.5">
+                    Rated: {item.rating}/5
+                  </span>
+                )}
                 {typeof item.confidence === 'number' && (
                   <span className="inline-flex rounded bg-emerald-100 text-emerald-700 px-2 py-0.5">
                     Confidence {(item.confidence * 100).toFixed(1)}%

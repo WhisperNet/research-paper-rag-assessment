@@ -24,6 +24,7 @@ router.get('/history', async (req: any, res: any) => {
             confidence: 1,
             created_at: 1,
             answer: 1,
+            rating: 1,
           },
         }
       )

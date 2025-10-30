@@ -5,6 +5,8 @@ import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HistoryPage from '@/components/ui/HistoryPage.tsx';
 import AnalyticsPage from '@/components/ui/AnalyticsPage.tsx';
+import StatsPage from '@/components/ui/StatsPage.tsx';
+import HealthPage from '@/components/ui/HealthPage.tsx';
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -22,6 +24,8 @@ function App() {
             <Routes>
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/stats" element={<StatsPage />} />
+              <Route path="/health" element={<HealthPage />} />
               <Route path="/" element={<ChatPanel />} />
             </Routes>
           </main>

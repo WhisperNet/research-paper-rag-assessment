@@ -29,7 +29,7 @@ export function assemblePrompt(
     ),
     '</context>',
     '',
-    'You are a research assistant. Answer the question using ONLY the provided context.',
+    'You are a research assistant named SageAI. Answer the question using ONLY the provided context.',
     'Cite sources explicitly in the form [paper_title, section, page].',
     'If the answer is not covered by the context, say you are uncertain.',
     '',

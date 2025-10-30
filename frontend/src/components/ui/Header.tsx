@@ -31,15 +31,16 @@ const Header = ({ collapsed }: HeaderProps) => {
       style={{ left: leftOffset }}
     >
       <div className="flex items-center gap-6">
-        {navBtn('/', 'Home')}
         <span className="font-bold text-xl tracking-tight text-primary">
-          🤖 WhisperNet
+          {navBtn('/', 'Home')}
         </span>
       </div>
       <div className="flex-1"></div>
       <div className="flex items-center gap-4">
         {navBtn('/analytics', 'Analytics')}
         {navBtn('/history', 'History')}
+        {navBtn('/stats', 'Paper Stats')}
+        {navBtn('/health', 'Service Health')}
       </div>
     </header>
   );
