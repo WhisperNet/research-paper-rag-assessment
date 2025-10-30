@@ -167,7 +167,7 @@ router.post('/upload', upload.single('file'), async (req: any, res: any) => {
       });
     }
     const env = loadEnv();
-    const embedderUrl = process.env.EMBEDDER_URL || 'http://localhost:9100';
+    const embedderUrl = env.EMBEDDER_URL;
 
     let extract: any;
     if (process.env.NODE_ENV === 'test') {
