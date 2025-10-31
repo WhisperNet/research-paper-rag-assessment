@@ -1,5 +1,18 @@
 version: '3.9'
 
+# ===================================================================
+# MAC/WINDOWS PRODUCTION: Uses prebuilt images; Ollama on host
+# Backend reaches host Ollama via host.docker.internal:11434
+# ===================================================================
+# Requirements on host:
+#   - Install Ollama and run server (port 11434)
+#   - Pull a model: `ollama pull llama3.2:1b`
+#
+# Run:
+#   cd infra
+#   docker compose -f docker-compose.mac-win.prod.yml up -d
+# ===================================================================
+
 services:
   mongo:
     image: mongo:7
@@ -30,21 +43,15 @@ services:
       - rag_net
 
   embedder:
-    build:
-      context: ..
-      dockerfile: infra/embedder.Dockerfile
+    image: whispernet/embedder-service:latest
     container_name: rag_embedder
     ports:
       - '9100:9100'
     networks:
       - rag_net
-    depends_on:
-      - mongo
 
   backend:
-    build:
-      context: ..
-      dockerfile: infra/backend.Dockerfile
+    image: whispernet/backend-service:latest
     container_name: rag_backend
     environment:
       - API_PORT=8000
@@ -53,8 +60,8 @@ services:
       - MONGO_DB=rag
       - QDRANT_URL=http://qdrant:6333
       - REDIS_URL=redis://redis:6379
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - SKIP_OLLAMA_READY_CHECK=true
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - SKIP_OLLAMA_READY_CHECK=false
       - EMBEDDER_URL=http://embedder:9100
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX=120
@@ -71,9 +78,7 @@ services:
       - embedder
 
   frontend:
-    build:
-      context: ..
-      dockerfile: infra/frontend.Dockerfile
+    image: whispernet/frontend-service:latest
     container_name: rag_frontend
     ports:
       - '8080:80'

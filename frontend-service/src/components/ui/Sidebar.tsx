@@ -76,13 +76,61 @@ const Sidebar = ({ collapsed, onToggleCollapsed }: SidebarProps) => {
       className={[
         'relative z-20 h-full border-r transition-[width] duration-200 ease-in-out',
         'bg-sidebar text-sidebar-foreground border-sidebar-border',
-        'pt-16', // header height offset
+        // No top padding; header starts to the right of sidebar
         collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
         'flex flex-col',
       ].join(' ')}
     >
+      {/* Brand */}
+      <div
+        className={
+          collapsed
+            ? 'px-2 py-3 flex items-center justify-center'
+            : 'px-3 py-3 flex items-center gap-2'
+        }
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-label="SageAI"
+        >
+          <path d="M12 18V5" />
+          <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" />
+          <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" />
+          <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" />
+          <path d="M18 18a4 4 0 0 0 2-7.464" />
+          <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" />
+          <path d="M6 18a4 4 0 0 1-2-7.464" />
+          <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" />
+        </svg>
+        {!collapsed && (
+          <span className="font-semibold tracking-tight">SageAI</span>
+        )}
+      </div>
+
+      {/* Floating middle collapse/expand handle */}
+      <button
+        className="absolute right-[-10px] top-1/2 -translate-y-1/2 z-30 size-7 rounded-full border bg-background shadow hover:shadow-md flex items-center justify-center"
+        onClick={() => onToggleCollapsed(!collapsed)}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={collapsed ? 'Expand' : 'Collapse'}
+      >
+        {collapsed ? (
+          <ChevronRight className="size-4" />
+        ) : (
+          <ChevronLeft className="size-4" />
+        )}
+      </button>
+
       {/* Sticky top controls */}
-      <div className="sticky top-16 bg-sidebar border-b border-sidebar-border/60 px-3 py-2 flex items-center gap-2">
+      <div className="sticky top-0 bg-sidebar border-b border-sidebar-border/60 px-3 py-2 flex items-center gap-2">
         {!collapsed && (
           <div className="text-sm font-semibold tracking-tight flex-1">
             Uploaded Files
@@ -97,19 +145,6 @@ const Sidebar = ({ collapsed, onToggleCollapsed }: SidebarProps) => {
             title="Add file"
           >
             {collapsed ? <Plus className="size-4" /> : '+ Add File'}
-          </Button>
-          <Button
-            size={'icon-sm'}
-            variant="ghost"
-            onClick={() => onToggleCollapsed(!collapsed)}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand' : 'Collapse'}
-          >
-            {collapsed ? (
-              <ChevronRight className="size-4" />
-            ) : (
-              <ChevronLeft className="size-4" />
-            )}
           </Button>
         </div>
       </div>

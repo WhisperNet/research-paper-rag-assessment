@@ -1,5 +1,18 @@
 version: '3.9'
 
+# ===================================================================
+# LINUX ONLY: Uses host network for backend to access Ollama on host
+# ===================================================================
+# Prerequisites:
+#   - Ollama running on host at http://localhost:11434
+#   - Install: curl -fsSL https://ollama.com/install.sh | sh
+#   - Start: ollama serve (or systemctl start ollama)
+#
+# Usage:
+#   cd infra
+#   docker compose -f docker-compose.linux.yml up --build
+# ===================================================================
+
 services:
   mongo:
     image: mongo:7
@@ -38,32 +51,25 @@ services:
       - '9100:9100'
     networks:
       - rag_net
-    depends_on:
-      - mongo
 
   backend:
     build:
       context: ..
       dockerfile: infra/backend.Dockerfile
     container_name: rag_backend
+    network_mode: host
     environment:
       - API_PORT=8000
       - LOG_LEVEL=info
-      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_URI=mongodb://localhost:27017
       - MONGO_DB=rag
-      - QDRANT_URL=http://qdrant:6333
-      - REDIS_URL=redis://redis:6379
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - SKIP_OLLAMA_READY_CHECK=true
-      - EMBEDDER_URL=http://embedder:9100
+      - QDRANT_URL=http://localhost:6333
+      - REDIS_URL=redis://localhost:6379
+      - OLLAMA_BASE_URL=http://localhost:11434
+      - SKIP_OLLAMA_READY_CHECK=false
+      - EMBEDDER_URL=http://localhost:9100
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX=120
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    ports:
-      - '8000:8000'
-    networks:
-      - rag_net
     depends_on:
       - mongo
       - qdrant

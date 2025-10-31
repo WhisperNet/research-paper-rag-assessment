@@ -1,5 +1,23 @@
 version: '3.9'
 
+# ===================================================================
+# MAC / WINDOWS: Requires Ollama installed on host
+# ===================================================================
+# WARNING: Running Ollama in Docker on Mac/Windows is VERY SLOW (CPU-only)
+# For best performance, install Ollama natively on your host machine.
+#
+# Prerequisites:
+#   MAC: brew install ollama && ollama serve
+#   WINDOWS: Download from https://ollama.com/download/windows
+#
+# Usage:
+#   1. Start Ollama on your host (it runs on port 11434)
+#   2. Pull a model: ollama pull llama3.2:1b
+#   3. Run compose:
+#      cd infra
+#      docker compose -f docker-compose.mac-win.yml up --build
+# ===================================================================
+
 services:
   mongo:
     image: mongo:7
@@ -38,8 +56,6 @@ services:
       - '9100:9100'
     networks:
       - rag_net
-    depends_on:
-      - mongo
 
   backend:
     build:
@@ -53,13 +69,11 @@ services:
       - MONGO_DB=rag
       - QDRANT_URL=http://qdrant:6333
       - REDIS_URL=redis://redis:6379
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - SKIP_OLLAMA_READY_CHECK=true
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - SKIP_OLLAMA_READY_CHECK=false
       - EMBEDDER_URL=http://embedder:9100
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX=120
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
     ports:
       - '8000:8000'
     networks:

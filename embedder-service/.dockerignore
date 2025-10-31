@@ -1,0 +1,17 @@
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.git
+.github
+.gitignore
+.vscode
+*.log
+.env
+.env.*
+Dockerfile*
+docker-compose*
+
