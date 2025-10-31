@@ -7,6 +7,7 @@ import HistoryPage from '@/components/ui/HistoryPage.tsx';
 import AnalyticsPage from '@/components/ui/AnalyticsPage.tsx';
 import StatsPage from '@/components/ui/StatsPage.tsx';
 import HealthPage from '@/components/ui/HealthPage.tsx';
+import MostDiscussedPage from '@/components/ui/MostDiscussedPage.tsx';
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -22,6 +23,7 @@ function App() {
           />
           <main className="flex-1 flex flex-col items-center justify-center">
             <Routes>
+              <Route path="/most-discussed" element={<MostDiscussedPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/stats" element={<StatsPage />} />

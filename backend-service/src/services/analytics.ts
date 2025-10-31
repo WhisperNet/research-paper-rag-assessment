@@ -94,3 +94,25 @@ export async function aggregatePopular(limit = 20): Promise<{
 
   return { top_questions: questions, top_papers: papers };
 }
+
+export async function getTopQuestions(limit = 10): Promise<string[]> {
+  const db = await getDb();
+
+  const questions = await db
+    .collection('queries')
+    .aggregate([
+      {
+        $group: {
+          _id: '$normalized_question',
+          count: { $sum: 1 },
+          any_q: { $first: '$question' },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: limit },
+      { $project: { _id: 0, question: '$any_q' } },
+    ])
+    .toArray();
+
+  return questions.map((q: any) => q.question);
+}

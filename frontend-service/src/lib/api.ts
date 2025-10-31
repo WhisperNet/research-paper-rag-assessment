@@ -129,8 +129,8 @@ export type PopularAnalytics = {
 export async function getPopular(
   limit: number = 20
 ): Promise<PopularAnalytics> {
-  const res = await fetch(`${API_BASE}/analytics/popular?limit=${limit}`);
-  if (!res.ok) throw new Error(`Popular analytics failed: ${res.status}`);
+  const res = await fetch(`${API_BASE}/analytics/top-questions?limit=${limit}`);
+  if (!res.ok) throw new Error(`Top questions analytics failed: ${res.status}`);
   const payload = await res.json();
   return payload?.data ?? payload; // backend returns ok(res, data)
 }
@@ -178,4 +178,20 @@ export async function getEmbedderHealth(): Promise<EmbedderHealth> {
   const res = await fetch(`${base.replace(/\/$/, '')}/healthz`);
   if (!res.ok) throw new Error(`Embedder health failed: ${res.status}`);
   return (await res.json()) as EmbedderHealth;
+}
+
+export type PopularTopicInsight = {
+  topic: string;
+  insight: string;
+  questions_analyzed: string[];
+  citations: Citation[];
+  sources_used: string[];
+  confidence: number;
+};
+
+export async function getPopularTopicInsight(): Promise<PopularTopicInsight> {
+  const res = await fetch(`${API_BASE}/analytics/popular`);
+  if (!res.ok) throw new Error(`Popular topic failed: ${res.status}`);
+  const payload = await res.json();
+  return payload?.data ?? payload;
 }

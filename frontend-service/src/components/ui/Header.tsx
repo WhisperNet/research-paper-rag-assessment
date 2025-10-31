@@ -34,6 +34,7 @@ const Header = ({ collapsed }: HeaderProps) => {
       <nav className="flex items-center justify-between gap-2 w-full">
         <div className="flex items-center gap-2">{navLink('/', 'Chat')}</div>
         <div className="flex items-center gap-2">
+          {navLink('/most-discussed', 'Most Discussed')}
           {navLink('/analytics', 'Analytics')}
           {navLink('/history', 'History')}
           {navLink('/stats', 'Paper Stats')}
