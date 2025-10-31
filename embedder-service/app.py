@@ -189,10 +189,14 @@ def chunk_text(text: str, max_chars: int = 1800, overlap: int = 200) -> List[str
             chunks.append(chunk)
         if end >= len(text):
             break
-        # Ensure forward progress
+        # Ensure forward progress - require minimum step of 100 chars or half max_chars
         new_start = end - overlap
+        min_step = min(100, max_chars // 2)
         if new_start <= start:
-            new_start = start + 1
+            new_start = start + min_step
+        # If we can't make meaningful progress, break to avoid tiny chunks
+        if new_start >= len(text):
+            break
         start = new_start
     return chunks
 

@@ -11,7 +11,9 @@ import {
   type PaperItem,
 } from '@/lib/api';
 import * as Dialog from '@radix-ui/react-dialog';
-import { SlidersHorizontal, Files } from 'lucide-react';
+import { SlidersHorizontal, Files, Download, Trash2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 function formatTime(ts: number) {
   const d = new Date(ts);
@@ -81,6 +83,71 @@ const ChatPanel = () => {
         localStorage.removeItem(STORAGE_KEY);
       } catch {}
     }
+  };
+
+  // Download chat as markdown
+  const handleDownload = () => {
+    if (messages.length === 0) {
+      alert('No chat history to download.');
+      return;
+    }
+
+    let markdown = '# Chat History\n\n';
+    markdown += `*Exported: ${new Date().toLocaleString()}*\n\n---\n\n`;
+
+    messages.forEach((m, idx) => {
+      const time = new Date(m.createdAt).toLocaleString();
+      if (m.role === 'user') {
+        markdown += `## User (${time})\n\n${m.content}\n\n`;
+      } else {
+        markdown += `## Assistant (${time})\n\n${m.content}\n\n`;
+
+        // Add metadata if available
+        if (m.meta?.confidence !== undefined) {
+          markdown += `*Confidence: ${(m.meta.confidence * 100).toFixed(
+            1
+          )}%*\n\n`;
+        }
+
+        // Add citations
+        if (m.meta?.citations && m.meta.citations.length > 0) {
+          markdown += `### Citations\n\n`;
+          m.meta.citations.forEach((c, cidx) => {
+            markdown += `${cidx + 1}. **${c.paper_title || 'Unknown'}**`;
+            if (c.section) markdown += ` - ${c.section}`;
+            if (c.page !== undefined) markdown += ` (p. ${c.page})`;
+            if (c.relevance_score !== undefined) {
+              markdown += ` - Relevance: ${(c.relevance_score * 100).toFixed(
+                1
+              )}%`;
+            }
+            markdown += '\n';
+          });
+          markdown += '\n';
+        }
+
+        // Add rating if available
+        if (m.meta?.rating !== undefined) {
+          markdown += `*User Rating: ${m.meta.rating}/5*\n\n`;
+        }
+      }
+
+      // Add separator between messages
+      if (idx < messages.length - 1) {
+        markdown += '---\n\n';
+      }
+    });
+
+    // Create download
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `chat-history-${Date.now()}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   React.useEffect(() => {
@@ -276,18 +343,27 @@ const ChatPanel = () => {
 
   return (
     <section className="flex flex-col w-full max-w-none mx-auto pt-24 pb-8 h-full">
-      {/* Floating Clear button */}
-      <Button
-        size="lg"
-        variant="secondary"
-        onClick={handleClear}
-        disabled={loading}
-        className="fixed bottom-6 right-6 z-40 rounded-full shadow-lg hover:shadow-xl"
-        aria-label="Clear chat"
-        title="Clear chat"
-      >
-        Clear chat
-      </Button>
+      {/* Floating action buttons */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2">
+        <button
+          onClick={handleDownload}
+          disabled={loading || messages.length === 0}
+          className="size-12 rounded-full bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl hover:bg-secondary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+          aria-label="Download chat as Markdown"
+          title="Download chat as Markdown"
+        >
+          <Download className="size-5" />
+        </button>
+        <button
+          onClick={handleClear}
+          disabled={loading}
+          className="size-12 rounded-full bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl hover:bg-secondary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+          aria-label="Clear chat"
+          title="Clear chat"
+        >
+          <Trash2 className="size-5" />
+        </button>
+      </div>
       <div ref={containerRef} className="flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-3xl px-4">
           {messages.length === 0 ? (
@@ -309,7 +385,39 @@ const ChatPanel = () => {
                         : 'bg-accent/40 text-foreground border-border')
                     }
                   >
-                    {m.content}
+                    {m.role === 'assistant' ? (
+                      <div className="markdown-body">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            a: (props) => (
+                              <a {...props} target="_blank" rel="noreferrer" />
+                            ),
+                            code: (props) => {
+                              const { children, className, node, ...rest } =
+                                props;
+                              const match = /language-(\w+)/.exec(
+                                className || ''
+                              );
+                              const isInline = !match;
+                              return isInline ? (
+                                <code className={className} {...rest}>
+                                  {children}
+                                </code>
+                              ) : (
+                                <pre className={className}>
+                                  <code {...rest}>{children}</code>
+                                </pre>
+                              );
+                            },
+                          }}
+                        >
+                          {m.content || ''}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      m.content
+                    )}
                     <div className="mt-1 text-[10px] opacity-70">
                       {formatTime(m.createdAt)}
                     </div>
