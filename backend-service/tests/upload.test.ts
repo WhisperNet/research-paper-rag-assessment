@@ -6,7 +6,7 @@ import app from '../src/index';
 
 describe('papers upload', () => {
   it('POST /api/v1/papers/upload returns paper_id', async () => {
-    const repoRoot = path.resolve(__dirname, '..', '..', '..');
+    const repoRoot = path.resolve(__dirname, '..', '..');
     const samplePath = path.join(repoRoot, 'sample_papers', 'paper_1.pdf');
     expect(fs.existsSync(samplePath)).toBe(true);
 

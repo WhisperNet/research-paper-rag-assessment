@@ -7,7 +7,7 @@ import { getDb } from '../src/services/mongoClient';
 
 describe('ingestion flow', () => {
   it('uploads and eventually marks paper indexed', async () => {
-    const repoRoot = path.resolve(__dirname, '..', '..', '..');
+    const repoRoot = path.resolve(__dirname, '..', '..');
     const samplePath = path.join(repoRoot, 'sample_papers', 'paper_1.pdf');
     expect(fs.existsSync(samplePath)).toBe(true);
 

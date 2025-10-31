@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Plus,
   FileText,
+  BrainIcon,
 } from 'lucide-react';
 import {
   listPapers,
@@ -74,44 +75,29 @@ const Sidebar = ({ collapsed, onToggleCollapsed }: SidebarProps) => {
   return (
     <aside
       className={[
-        'relative z-20 h-full border-r transition-[width] duration-200 ease-in-out',
-        'bg-sidebar text-sidebar-foreground border-sidebar-border',
-        // No top padding; header starts to the right of sidebar
+        'relative z-40 h-full border-r transition-[width] duration-200 ease-in-out',
+        'bg-background text-foreground border-border',
         collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
         'flex flex-col',
       ].join(' ')}
     >
-      {/* Brand */}
+      {/* Brand - Same height as header (h-16) */}
       <div
-        className={
-          collapsed
-            ? 'px-2 py-3 flex items-center justify-center'
-            : 'px-3 py-3 flex items-center gap-2'
-        }
+        className={`
+          h-16 border-b border-border flex items-center
+          ${collapsed ? 'justify-center px-2' : 'px-4 gap-3'}
+        `}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-label="SageAI"
-        >
-          <path d="M12 18V5" />
-          <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" />
-          <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" />
-          <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" />
-          <path d="M18 18a4 4 0 0 0 2-7.464" />
-          <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" />
-          <path d="M6 18a4 4 0 0 1-2-7.464" />
-          <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" />
-        </svg>
+        <div className="size-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+          <BrainIcon className="size-5" />
+        </div>
         {!collapsed && (
-          <span className="font-semibold tracking-tight">SageAI</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-base tracking-tight">SageAI</span>
+            <span className="text-xs text-muted-foreground">
+              Research Assistant
+            </span>
+          </div>
         )}
       </div>
 
@@ -130,23 +116,28 @@ const Sidebar = ({ collapsed, onToggleCollapsed }: SidebarProps) => {
       </button>
 
       {/* Sticky top controls */}
-      <div className="sticky top-0 bg-sidebar border-b border-sidebar-border/60 px-3 py-2 flex items-center gap-2">
+      <div className="sticky top-0 bg-background border-b border-border px-3 py-3 flex items-center gap-2">
         {!collapsed && (
           <div className="text-sm font-semibold tracking-tight flex-1">
-            Uploaded Files
+            Papers
           </div>
         )}
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            size={collapsed ? 'icon-sm' : 'sm'}
-            variant="outline"
-            onClick={() => setOpenUpload(true)}
-            aria-label="Add file"
-            title="Add file"
-          >
-            {collapsed ? <Plus className="size-4" /> : '+ Add File'}
-          </Button>
-        </div>
+        <Button
+          size={collapsed ? 'icon' : 'sm'}
+          variant="outline"
+          onClick={() => setOpenUpload(true)}
+          aria-label="Add file"
+          title="Add file"
+          className={collapsed ? 'mx-auto' : ''}
+        >
+          {collapsed ? (
+            <Plus className="size-4" />
+          ) : (
+            <>
+              <Plus className="size-4 mr-1" /> Add
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Scrollable file list */}
@@ -168,16 +159,16 @@ const Sidebar = ({ collapsed, onToggleCollapsed }: SidebarProps) => {
               return (
                 <li
                   key={file.id}
-                  className="group flex items-center gap-2 rounded-md px-2 py-2 hover:bg-sidebar-accent/60"
+                  className="group flex items-center gap-2 rounded-md px-2 py-2 hover:bg-accent/50 transition-colors"
                   title={title}
                 >
-                  <FileText className="size-4 shrink-0 text-sidebar-foreground/80" />
+                  <FileText className="size-4 shrink-0 text-muted-foreground" />
                   {!collapsed && (
                     <span className="text-sm truncate flex-1">{title}</span>
                   )}
                   <button
                     className={
-                      'p-1 text-muted-foreground hover:text-destructive transition-opacity ' +
+                      'p-1 text-muted-foreground hover:text-destructive transition-all ' +
                       (collapsed
                         ? 'opacity-100'
                         : 'opacity-0 group-hover:opacity-100')

@@ -1,4 +1,3 @@
-import { Button } from './button';
 import { Link, useLocation } from 'react-router-dom';
 
 type HeaderProps = { collapsed?: boolean };
@@ -8,40 +7,39 @@ const Header = ({ collapsed }: HeaderProps) => {
   const leftOffset = collapsed ? '4rem' : '18rem';
   const { pathname } = useLocation();
 
-  const navBtn = (to: string, label: string) => (
-    <Button asChild variant="ghost">
+  const navLink = (to: string, label: string) => {
+    const isActive = pathname === to;
+    return (
       <Link
         to={to}
-        className={
-          pathname === to
-            ? 'font-semibold text-primary underline underline-offset-4'
-            : ''
-        }
+        className={`
+          px-3 py-2 rounded-md text-sm font-medium transition-colors
+          ${
+            isActive
+              ? 'bg-primary text-primary-foreground'
+              : 'text-foreground/70 hover:text-foreground hover:bg-accent'
+          }
+        `}
       >
         {label}
       </Link>
-    </Button>
-  );
+    );
+  };
 
   return (
     <header
-      className={
-        'fixed top-0 right-0 z-30 h-16 bg-white shadow flex items-center px-4'
-      }
+      className="fixed top-0 right-0 z-30 h-16 bg-background border-b border-border flex items-center px-6 transition-all duration-200"
       style={{ left: leftOffset }}
     >
-      <div className="flex items-center gap-6">
-        <span className="font-bold text-xl tracking-tight text-primary">
-          {navBtn('/', 'Home')}
-        </span>
-      </div>
-      <div className="flex-1"></div>
-      <div className="flex items-center gap-4">
-        {navBtn('/analytics', 'Analytics')}
-        {navBtn('/history', 'History')}
-        {navBtn('/stats', 'Paper Stats')}
-        {navBtn('/health', 'Service Health')}
-      </div>
+      <nav className="flex items-center justify-between gap-2 w-full">
+        <div className="flex items-center gap-2">{navLink('/', 'Chat')}</div>
+        <div className="flex items-center gap-2">
+          {navLink('/analytics', 'Analytics')}
+          {navLink('/history', 'History')}
+          {navLink('/stats', 'Paper Stats')}
+          {navLink('/health', 'Health')}
+        </div>
+      </nav>
     </header>
   );
 };

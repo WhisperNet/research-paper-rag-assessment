@@ -10,6 +10,7 @@ RUN bun run build
 
 FROM nginx:alpine
 COPY --from=build /app/frontend-service/dist /usr/share/nginx/html
+COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Nginx serves on port 80 by default
 EXPOSE 80
