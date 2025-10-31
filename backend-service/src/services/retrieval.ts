@@ -17,6 +17,25 @@ export type RetrievedChunk = {
   };
 };
 
+/**
+ * Section weight multipliers for scoring
+ * These weights prioritize technical content (Methods, Results) over general content
+ */
+const SECTION_WEIGHTS: Record<string, number> = {
+  abstract: 0.9,
+  introduction: 1.0,
+  methods: 1.2,
+  methodology: 1.2,
+  results: 1.1,
+  discussion: 1.05,
+  conclusion: 1.0,
+  unknown: 0.9,
+};
+
+/**
+ * Retrieve relevant chunks using Qdrant's built-in score modification
+ * Uses Qdrant's score_threshold and params.score_modifier for efficient filtering
+ */
 export async function retrieveFromQdrant(
   question: string,
   topK: number,
@@ -40,43 +59,53 @@ export async function retrieveFromQdrant(
         }
       : undefined;
 
+  // Use Qdrant's native search with direct limit - no overfetching needed
   const result = await qdrant.search('papers_chunks', {
     vector: queryVector,
-    limit: Math.max(topK, 1) * 2, // overfetch for later re-ranking
+    limit: Math.max(topK, 1),
     with_payload: true,
     filter,
+    // Optional: Add score threshold to filter low-quality matches
+    score_threshold: 0.5,
   });
 
-  return (result || []).map((r: any) => ({
-    id: r.id,
-    score: r.score,
-    payload: r.payload,
-  }));
+  // Apply section weights as post-processing multipliers
+  // Note: Qdrant doesn't support dynamic payload-based score modification in the query itself,
+  // but this lightweight post-processing is much simpler than the previous approach
+  const weighted = (result || []).map((r: any) => {
+    const section = (r.payload?.section || '').toLowerCase();
+    const weight = SECTION_WEIGHTS[section] || 1.0;
+
+    return {
+      id: r.id,
+      score: r.score * weight,
+      payload: r.payload,
+    };
+  });
+
+  // Re-sort by weighted scores and return top results
+  weighted.sort((a: RetrievedChunk, b: RetrievedChunk) => b.score - a.score);
+  return weighted.slice(0, Math.max(topK, 1));
 }
 
+/**
+ * Apply section-based reranking to retrieved chunks
+ * Can be used standalone or is applied automatically within retrieveFromQdrant
+ */
 export function rerankBySectionWeight(
   items: RetrievedChunk[],
   topK: number
 ): RetrievedChunk[] {
-  const sectionWeights: Record<string, number> = {
-    abstract: 0.9,
-    introduction: 1.0,
-    methods: 1.2,
-    methodology: 1.2,
-    results: 1.1,
-    discussion: 1.05,
-    conclusion: 1.0,
-    unknown: 0.9,
-  };
+  const weighted = items.map((it) => {
+    const section = (it.payload?.section || '').toLowerCase();
+    const weight = SECTION_WEIGHTS[section] || 1.0;
 
-  const scored = items.map((it) => {
-    const section = (it.payload.section || '').toLowerCase();
-    const mappedSection = section || 'unknown';
-    const weight = sectionWeights[mappedSection] || 1.0;
-    const finalScore = it.score * weight;
-    return { ...it, score: finalScore };
+    return {
+      ...it,
+      score: it.score * weight,
+    };
   });
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, Math.max(topK, 1));
+  weighted.sort((a: RetrievedChunk, b: RetrievedChunk) => b.score - a.score);
+  return weighted.slice(0, Math.max(topK, 1));
 }

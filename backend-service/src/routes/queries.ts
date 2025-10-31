@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { ObjectId } from 'mongodb';
 import { ok } from '../utils/http';
 import { getDb } from '../services/mongoClient';
+import { ratingSchema, objectIdSchema } from '../schemas/validation';
 
 const router = Router();
 
@@ -44,24 +46,10 @@ router.get('/history', async (req: any, res: any) => {
 
 router.patch('/:id/rating', async (req: any, res: any) => {
   try {
-    const id = req.params.id;
-    let objectId: any;
-    try {
-      objectId = new (await import('mongodb')).ObjectId(id);
-    } catch {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'invalid id' },
-      });
-    }
+    const id = objectIdSchema.parse(req.params.id);
+    const { rating } = ratingSchema.parse(req.body);
 
-    const rating = Number((req.body || {}).rating);
-    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'rating must be 1-5' },
-      });
-    }
+    const objectId = new ObjectId(id);
 
     const db = await getDb();
     const result = await db
@@ -75,6 +63,12 @@ router.patch('/:id/rating', async (req: any, res: any) => {
     }
     ok(res, { id, rating });
   } catch (e: any) {
+    if (e.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: e.errors[0].message },
+      });
+    }
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL', message: e?.message || 'rating failed' },

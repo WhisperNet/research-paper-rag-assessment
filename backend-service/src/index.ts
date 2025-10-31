@@ -11,6 +11,7 @@ import { openapiSpec } from './openapi/spec';
 import healthRouter from './routes/health';
 import { startIngestWorker } from './services/ingestionQueue';
 import { ensureQueryIndexes } from './services/analytics';
+import { logger } from './config/logger';
 
 config();
 
@@ -25,12 +26,15 @@ app.use(express.json({ limit: '2mb' }));
 app.use('/health', healthRouter);
 app.get('/openapi.json', (_req: any, res: any) => res.json(openapiSpec));
 app.use(requestId());
-app.use(
-  rateLimit({
-    windowMs: Number(env.RATE_LIMIT_WINDOW_MS),
-    max: Number(env.RATE_LIMIT_MAX),
-  })
-);
+// Only enable rate limiting in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    rateLimit({
+      windowMs: Number(env.RATE_LIMIT_WINDOW_MS),
+      max: Number(env.RATE_LIMIT_MAX),
+    })
+  );
+}
 app.use('/api/v1', apiRouter);
 
 // Not found
@@ -51,11 +55,15 @@ export default app;
 // start background worker (no-op if already started)
 try {
   startIngestWorker();
-} catch {}
+} catch (err) {
+  logger.error({ err }, 'Failed to start ingest worker');
+}
 
 // ensure indexes asynchronously (no-op if exist)
 (async () => {
   try {
     await ensureQueryIndexes();
-  } catch {}
+  } catch (err) {
+    logger.error({ err }, 'Failed to ensure query indexes');
+  }
 })();

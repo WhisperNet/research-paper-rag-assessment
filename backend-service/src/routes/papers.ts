@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { notImplemented, ok } from '../utils/http';
+import { ObjectId } from 'mongodb';
+import { ok } from '../utils/http';
 import { loadEnv } from '../config/env';
 import { getDb } from '../services/mongoClient';
 import { logger } from '../config/logger';
@@ -9,6 +10,7 @@ import {
   deleteByPaperId,
   countVectorsByPaperId,
 } from '../services/qdrantClient';
+import { objectIdSchema } from '../schemas/validation';
 
 const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } });
 
@@ -42,16 +44,8 @@ router.get('/', async (_req: any, res: any) => {
 
 router.get('/:id', async (req: any, res: any) => {
   try {
-    const id = req.params.id;
-    let objectId: any;
-    try {
-      objectId = new (await import('mongodb')).ObjectId(id);
-    } catch {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'invalid id' },
-      });
-    }
+    const id = objectIdSchema.parse(req.params.id);
+    const objectId = new ObjectId(id);
     const db = await getDb();
     const paper = await db.collection('papers').findOne({ _id: objectId });
     if (!paper)
@@ -73,6 +67,12 @@ router.get('/:id', async (req: any, res: any) => {
       indexed_at: paper.indexed_at,
     });
   } catch (e: any) {
+    if (e.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: e.errors[0].message },
+      });
+    }
     return res.status(500).json({
       success: false,
       error: { code: 'INTERNAL', message: e?.message || 'details failed' },
@@ -82,16 +82,8 @@ router.get('/:id', async (req: any, res: any) => {
 
 router.delete('/:id', async (req: any, res: any) => {
   try {
-    const id = req.params.id;
-    let objectId: any;
-    try {
-      objectId = new (await import('mongodb')).ObjectId(id);
-    } catch {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'invalid id' },
-      });
-    }
+    const id = objectIdSchema.parse(req.params.id);
+    const objectId = new ObjectId(id);
     const db = await getDb();
     const paper = await db.collection('papers').findOne({ _id: objectId });
     if (!paper)
@@ -112,6 +104,12 @@ router.delete('/:id', async (req: any, res: any) => {
       removed_paper: true,
     });
   } catch (e: any) {
+    if (e.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: e.errors[0].message },
+      });
+    }
     return res.status(500).json({
       success: false,
       error: { code: 'INTERNAL', message: e?.message || 'delete failed' },
@@ -121,16 +119,8 @@ router.delete('/:id', async (req: any, res: any) => {
 
 router.get('/:id/stats', async (req: any, res: any) => {
   try {
-    const id = req.params.id;
-    let objectId: any;
-    try {
-      objectId = new (await import('mongodb')).ObjectId(id);
-    } catch {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'invalid id' },
-      });
-    }
+    const id = objectIdSchema.parse(req.params.id);
+    const objectId = new ObjectId(id);
     const db = await getDb();
     const paper = await db.collection('papers').findOne({ _id: objectId });
     if (!paper)
@@ -151,6 +141,12 @@ router.get('/:id/stats', async (req: any, res: any) => {
       indexed_at: paper.indexed_at || null,
     });
   } catch (e: any) {
+    if (e.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: e.errors[0].message },
+      });
+    }
     return res.status(500).json({
       success: false,
       error: { code: 'INTERNAL', message: e?.message || 'stats failed' },

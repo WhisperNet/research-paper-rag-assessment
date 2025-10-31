@@ -8,13 +8,12 @@ const envSchema = z.object({
   QDRANT_URL: z.string().default('http://localhost:6333'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   OLLAMA_BASE_URL: z.string().default('http://localhost:11434'),
-  RATE_LIMIT_WINDOW_MS: z.string().default('60000'),
+  RATE_LIMIT_WINDOW_MS: z.string().default('10000'),
   RATE_LIMIT_MAX: z.string().default('120'),
-  SKIP_OLLAMA_READY_CHECK: z.string().default('false'),
   EMBEDDER_URL: z.string().default('http://localhost:9100'),
 });
 
-export type Env = any;
+export type Env = ReturnType<typeof envSchema.parse>;
 
 export function loadEnv(): Env {
   return envSchema.parse(process.env);

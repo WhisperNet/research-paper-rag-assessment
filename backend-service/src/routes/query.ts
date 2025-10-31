@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createHash } from 'crypto';
 import { ok } from '../utils/http';
 import {
   retrieveFromQdrant,
@@ -9,27 +10,46 @@ import { assemblePrompt } from '../utils/prompt';
 import { generateAnswer } from '../services/ollamaClient';
 import { getRedis } from '../services/redisClient';
 import { saveQueryHistory, normalizeQuestion } from '../services/analytics';
+import { logger } from '../config/logger';
+import { querySchema } from '../schemas/validation';
 
 const router = Router();
 
+/**
+ * Generate a compact, deterministic cache key from query parameters
+ * Uses SHA256 hash to avoid issues with long questions and whitespace variations
+ */
+function generateCacheKey(
+  question: string,
+  topK: number,
+  paperIds?: string[]
+): string {
+  // Normalize the question: trim, lowercase, collapse multiple spaces
+  const normalizedQuestion = question.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  // Sort paper IDs for consistency (e.g., [1,2,3] and [3,2,1] should match)
+  const sortedPaperIds = paperIds ? [...paperIds].sort().join(',') : '*';
+
+  // Create a deterministic string representation
+  const cacheInput = `${normalizedQuestion}|${topK}|${sortedPaperIds}`;
+
+  // Hash it to keep keys short and consistent
+  const hash = createHash('sha256')
+    .update(cacheInput)
+    .digest('hex')
+    .slice(0, 16);
+
+  return `query:ret:${hash}`;
+}
+
 router.post('/', async (req: any, res: any) => {
-  const { question, top_k = 5, paper_ids } = req.body || {};
-  if (!question || typeof question !== 'string') {
-    return res.status(400).json({
-      success: false,
-      error: { code: 'BAD_REQUEST', message: 'question is required' },
-    });
-  }
-
-  const topK = Math.max(1, Math.min(Number(top_k) || 5, 10));
-  const paperIds = Array.isArray(paper_ids) ? paper_ids.map(String) : undefined;
-
   try {
+    const validated = querySchema.parse(req.body);
+    const { question, top_k = 5, paper_ids } = validated;
+    const topK = top_k;
+    const paperIds = paper_ids;
     const redis = getRedis();
-    const cacheKey =
-      `query:ret:${String(question).trim().toLowerCase()}:` +
-      `${topK}:` +
-      `${paperIds ? paperIds.join(',') : '*'}`;
+    const cacheKey = generateCacheKey(question, topK, paperIds);
 
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -107,10 +127,18 @@ router.post('/', async (req: any, res: any) => {
         confidence,
         created_at: new Date(),
       });
-    } catch {}
+    } catch (err) {
+      logger.warn({ err }, 'Failed to save query history');
+    }
 
     ok(res, responseData);
   } catch (e: any) {
+    if (e.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: e.errors[0].message },
+      });
+    }
     return res.status(500).json({
       success: false,
       error: { code: 'INTERNAL', message: e?.message || 'query failed' },

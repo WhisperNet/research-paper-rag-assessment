@@ -1,4 +1,5 @@
 import { Queue, Worker, JobsOptions } from 'bullmq';
+import { ObjectId } from 'mongodb';
 import { getDb } from './mongoClient';
 import { getQdrant } from './qdrantClient';
 import { callEmbed } from './embedderClient';
@@ -31,7 +32,7 @@ export function startIngestWorker(): void {
       const db = await getDb();
       const paper = await db
         .collection('papers')
-        .findOne({ _id: new (await import('mongodb')).ObjectId(paperId) });
+        .findOne({ _id: new ObjectId(paperId) });
       if (!paper) throw new Error('paper not found');
       // load chunks saved during upload
       const chunks = await db
