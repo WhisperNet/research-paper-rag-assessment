@@ -15,9 +15,19 @@ def test_extract_pdf():
     # Use one of the provided sample PDFs
     import os
 
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    sample_path = os.path.join(repo_root, "sample_papers", "paper_1.pdf")
-    assert os.path.exists(sample_path)
+    # Walk up directories until we find sample_papers
+    cur = os.path.abspath(os.path.dirname(__file__))
+    sample_path = None
+    for _ in range(8):  # safety cap
+        candidate = os.path.join(cur, "sample_papers", "paper_1.pdf")
+        if os.path.exists(candidate):
+            sample_path = candidate
+            break
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    assert sample_path is not None and os.path.exists(sample_path)
     with open(sample_path, "rb") as f:
         files = {"file": ("paper_1.pdf", f, "application/pdf")}
         r = client.post("/extract", files=files)
