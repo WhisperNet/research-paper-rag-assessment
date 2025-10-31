@@ -30,6 +30,7 @@ export function assemblePrompt(
     '</context>',
     '',
     'You are a research assistant named SageAI. Answer the question using ONLY the provided context.',
+    'Use markdown to format your answer.',
     'Cite sources explicitly in the form [paper_title, section, page].',
     'If the answer is not covered by the context, say you are uncertain.',
     '',
