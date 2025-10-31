@@ -35,7 +35,7 @@ if (process.env.NODE_ENV === 'production') {
     })
   );
 }
-app.use('/api/v1', apiRouter);
+app.use('/api', apiRouter);
 
 // Not found
 app.use((req: any, res: any) => {

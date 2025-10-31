@@ -1,5 +1,5 @@
 const API_BASE =
-  (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8000/api/v1';
+  (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8000/api';
 const SERVICE_BASE =
   (import.meta.env.VITE_SERVICE_BASE as string) || 'http://localhost:8000';
 

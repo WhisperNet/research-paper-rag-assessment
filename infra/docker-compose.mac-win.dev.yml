@@ -74,6 +74,8 @@ services:
       - EMBEDDER_URL=http://embedder:9100
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX=120
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '8000:8000'
     networks:
