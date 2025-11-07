@@ -1,0 +1,107 @@
+version: '3.9'
+
+# ===================================================================
+# MAC / WINDOWS: Requires Ollama installed on host
+# ===================================================================
+# WARNING: Running Ollama in Docker on Mac/Windows is VERY SLOW (CPU-only)
+# For best performance, install Ollama natively on your host machine.
+#
+# Prerequisites:
+#   MAC: brew install ollama && ollama serve
+#   WINDOWS: Download from https://ollama.com/download/windows
+#
+# Usage:
+#   1. Start Ollama on your host (it runs on port 11434)
+#   2. Pull a model: ollama pull llama3.2:1b
+#   3. Run compose:
+#      cd infra
+#      docker compose -f docker-compose.mac-win.yml up --build
+# ===================================================================
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: rag_mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rag_net
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.0
+    container_name: rag_qdrant
+    ports:
+      - '6333:6333'
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - rag_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: rag_redis
+    ports:
+      - '6379:6379'
+    networks:
+      - rag_net
+
+  embedder:
+    build:
+      context: ..
+      dockerfile: infra/embedder.Dockerfile
+    container_name: rag_embedder
+    ports:
+      - '9100:9100'
+    networks:
+      - rag_net
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/backend.Dockerfile
+    container_name: rag_backend
+    environment:
+      - API_PORT=8000
+      - LOG_LEVEL=info
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=rag
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - SKIP_OLLAMA_READY_CHECK=false
+      - EMBEDDER_URL=http://embedder:9100
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX=120
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    ports:
+      - '8000:8000'
+    networks:
+      - rag_net
+    depends_on:
+      - mongo
+      - qdrant
+      - redis
+      - embedder
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/frontend.Dockerfile
+    container_name: rag_frontend
+    ports:
+      - '8080:80'
+    networks:
+      - rag_net
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+  qdrant_data:
+
+networks:
+  rag_net:
+    driver: bridge
